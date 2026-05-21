@@ -14,7 +14,8 @@ Web-based CNC control UI with a Node.js backend and React frontend. Supports USB
 ```bash
 npm install
 npm run dev          # simulated / default
-npm run dev:usb      # USB serial (set SERIAL_PORT if needed)
+npm run dev:usb      # USB serial, auto-detect port
+npm run dev:com12    # USB serial on COM12 (Windows MCU)
 ```
 
 ## Scripts
@@ -23,6 +24,7 @@ npm run dev:usb      # USB serial (set SERIAL_PORT if needed)
 |---------|-------------|
 | `npm run dev` | Run server + client in development |
 | `npm run dev:usb` | Server with USB serial (`SERIAL_PORT=auto`) |
+| `npm run dev:com12` | Server + UI, MCU on **COM12** @ 115200 |
 | `npm run ports` | List available serial ports |
 | `npm run build` | Build client and server |
 | `npm run start` | Run production server |
@@ -36,4 +38,5 @@ npm run dev:usb      # USB serial (set SERIAL_PORT if needed)
 | `SERIAL_BAUD` | `115200` | Baud rate |
 | `SERIAL_PROTOCOL` | `json` | Hardware protocol |
 
-See [docs/MCU_USB_SETUP.md](docs/MCU_USB_SETUP.md) for USB setup.
+See [docs/MCU_USB_SETUP.md](docs/MCU_USB_SETUP.md) for USB setup.  
+**Windows COM12:** [docs/WINDOWS_COM12.md](docs/WINDOWS_COM12.md)

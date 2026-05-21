@@ -21,7 +21,9 @@ Example macOS paths:
 - `/dev/cu.usbmodem14101`
 - `/dev/cu.usbserial-*`
 
-Windows: `COM3`, `COM4`, …
+Windows: `COM3`, `COM12`, …
+
+**Windows tutorial for a fixed port (e.g. COM12):** see **[WINDOWS_COM12.md](WINDOWS_COM12.md)**.
 
 ## 2. Flash MCU firmware
 
@@ -45,25 +47,28 @@ The server sends G-code / `?` status polls instead of JSON.
 
 ## 3. Run the host with USB enabled
 
-**Auto-detect port:**
+**Windows COM12 (recommended if Device Manager shows COM12):**
+
+```bash
+npm run dev:com12
+```
+
+**Auto-detect port (macOS / Linux / Windows):**
 
 ```bash
 npm run dev:usb
 ```
 
-**Explicit port (macOS example):**
+**Explicit port**
 
-```bash
-SERIAL_PORT=/dev/cu.usbmodem14101 SERIAL_BAUD=115200 npm run dev -w server
-```
+| OS | Command |
+|----|---------|
+| Windows (PowerShell) | `$env:SERIAL_PORT="COM12"; npm run dev` |
+| Windows (cmd) | `set SERIAL_PORT=COM12 && npm run dev` |
+| macOS / Linux | `SERIAL_PORT=/dev/cu.usbmodem14101 npm run dev` |
+| Any (cross-platform) | `npx cross-env SERIAL_PORT=COM12 npm run dev` |
 
-In another terminal (or use root `npm run dev` for UI only):
-
-```bash
-npm run dev -w client
-```
-
-Open http://localhost:5173 — footer should show **USB SERIAL (...)** when linked.
+Open http://localhost:5173 — footer should show **USB SERIAL (COM12)** (or your port) when linked.
 
 ## Environment variables
 

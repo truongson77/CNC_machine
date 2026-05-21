@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "dev:usb": "SERIAL_PORT=auto tsx watch src/index.ts",
+    "dev:usb": "cross-env SERIAL_PORT=auto tsx watch src/index.ts",
+    "dev:com12": "cross-env SERIAL_PORT=COM12 SERIAL_BAUD=115200 tsx watch src/index.ts",
     "ports": "tsx src/scripts/listPorts.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -20,6 +21,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.10.1",
     "@types/ws": "^8.5.13",
+    "cross-env": "^7.0.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
