@@ -134,15 +134,19 @@ function ingestMcu(machine: MachineRuntime, msg: McuInbound, protocol: HardwareP
     machine.setSystemToast(msg.msg);
     return;
   }
-  if (msg.evt === "status") {
+  if (msg.evt === "status" || msg.evt === "jog_done") {
+    const m = msg as McuInbound & { x?: number; y?: number; z?: number; machine?: string };
     machine.applyHardwareTelemetry({
-      machineStatus: mapMachineStatus(msg.machine),
-      x: msg.x,
-      y: msg.y,
-      z: msg.z,
-      spindle: msg.spindle,
-      tempC: msg.tempC,
+      machineStatus: mapMachineStatus(m.machine),
+      x: m.x,
+      y: m.y,
+      z: m.z,
+      spindle: (m as { spindle?: number }).spindle,
+      tempC: (m as { tempC?: number }).tempC,
     });
+    return;
+  }
+  if (msg.evt === "ack") {
     return;
   }
   if (msg.evt === "mdi_done") {

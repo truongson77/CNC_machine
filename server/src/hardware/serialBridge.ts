@@ -12,6 +12,8 @@ export type SerialBridgeEvents = {
   error: [Error];
 };
 
+const SERIAL_DEBUG = process.env.SERIAL_DEBUG === "1" || process.env.SERIAL_DEBUG === "true";
+
 export class SerialBridge extends EventEmitter<SerialBridgeEvents> {
   readonly path: string;
   private port: SerialPort | null = null;
@@ -24,6 +26,7 @@ export class SerialBridge extends EventEmitter<SerialBridgeEvents> {
     this.port = new SerialPort({ path, baudRate, autoOpen: false });
     this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\n" }));
     this.parser.on("data", (line: string) => {
+      if (SERIAL_DEBUG) console.log(`[serial RX] ${line.trim()}`);
       const msg = parseMcuLine(line);
       if (msg) this.emit("message", msg);
       else this.emit("raw", line);
@@ -65,7 +68,9 @@ export class SerialBridge extends EventEmitter<SerialBridgeEvents> {
     if (!this.port?.isOpen) {
       throw new Error(`Serial port ${this.path} is not open`);
     }
-    this.port.write(encodeHostCommand(cmd));
+    const out = encodeHostCommand(cmd);
+    if (SERIAL_DEBUG) console.log(`[serial TX] ${out.trim()}`);
+    this.port.write(out);
   }
 
   /** Plain G-code line (GRBL-style firmware). */

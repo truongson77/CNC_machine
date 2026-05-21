@@ -43,7 +43,22 @@ export type McuErrorEvent = {
   msg: string;
 };
 
-export type McuInbound = McuStatusEvent | McuHelloEvent | McuMdiDoneEvent | McuErrorEvent;
+export type McuAckEvent = { evt: "ack"; cmd?: string; ok?: boolean };
+export type McuJogDoneEvent = {
+  evt: "jog_done";
+  axis?: string;
+  x?: number;
+  y?: number;
+  z?: number;
+};
+
+export type McuInbound =
+  | McuStatusEvent
+  | McuHelloEvent
+  | McuMdiDoneEvent
+  | McuErrorEvent
+  | McuAckEvent
+  | McuJogDoneEvent;
 
 export function encodeHostCommand(cmd: HostCommand): string {
   return JSON.stringify(cmd) + "\n";

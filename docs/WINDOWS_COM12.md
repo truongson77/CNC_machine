@@ -118,6 +118,35 @@ npm run dev
 
 ---
 
+## See JSON when you press X+ / Y+ (jog)
+
+The MCU prints JSON on **COM12**. The **website** uses that port via Node — you cannot also open **Arduino Serial Monitor** on COM12 at the same time.
+
+**While using the website:**
+
+1. Run `npm run dev:com12` (already sets `SERIAL_DEBUG=1`).
+2. Press **X+** or **Y+** on http://localhost:5173 → **Controller**.
+3. In the **server terminal** you should see:
+
+```text
+[serial TX] {"cmd":"jog","axis":"X","dir":1,"step":0.01,"rapid":false}
+[serial RX] {"evt":"ack","cmd":"jog","ok":true}
+[serial RX] {"evt":"jog_done","axis":"X","dir":1,"step":0.01,"x":0.01,"y":0,"z":0}
+[serial RX] {"evt":"status","machine":"IDLE","x":0.01,"y":0,"z":0,"spindle":0}
+```
+
+The DRO on the website should match the `x` / `y` values in JSON.
+
+**Test MCU only (no website):** close Node, open Serial Monitor @ **115200**, newline, paste:
+
+```json
+{"cmd":"jog","axis":"X","dir":1,"step":0.01,"rapid":false}
+```
+
+Re-flash `firmware/mcu_json_protocol/mcu_json_protocol.ino` after changes.
+
+---
+
 ## Quick test after connect
 
 | Step | Action | Expected |

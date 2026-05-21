@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:usb": "cross-env SERIAL_PORT=auto tsx watch src/index.ts",
-    "dev:com12": "cross-env SERIAL_PORT=COM12 SERIAL_BAUD=115200 tsx watch src/index.ts",
+    "dev:com12": "cross-env SERIAL_PORT=COM12 SERIAL_BAUD=115200 SERIAL_DEBUG=1 tsx watch src/index.ts",
     "ports": "tsx src/scripts/listPorts.ts",
     "build": "tsc",
     "start": "node dist/index.js"
