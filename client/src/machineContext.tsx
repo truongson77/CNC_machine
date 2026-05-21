@@ -13,34 +13,52 @@ import type { MachineState } from "./types";
 type Ctx = {
   state: MachineState | null;
   connected: boolean;
+  serverReachable: boolean | null;
   sendError: string | null;
   send: (type: string, payload?: Record<string, unknown>) => boolean;
 };
 
 const MachineContext = createContext<Ctx | null>(null);
 
+/**
+ * Dev: WebSocket via Vite proxy (ws://localhost:5173/ws → server :3847).
+ * Avoids connecting the browser directly to port 3847 (often blocked on Windows).
+ */
 function wsUrl() {
   const env = import.meta.env.VITE_WS_URL as string | undefined;
   if (env) return env;
-  const host =
-    import.meta.env.DEV && window.location.hostname === "localhost"
-      ? "127.0.0.1"
-      : window.location.hostname;
-  return `ws://${host}:3847`;
+
+  if (import.meta.env.DEV) {
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${proto}//${window.location.host}/ws`;
+  }
+
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const host = window.location.hostname;
+  const port = import.meta.env.VITE_SERVER_PORT ?? "3847";
+  return `${proto}//${host}:${port}`;
 }
 
 export function MachineProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<MachineState | null>(null);
   const [connected, setConnected] = useState(false);
+  const [serverReachable, setServerReachable] = useState<boolean | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    fetch("/api/hardware")
+      .then((r) => setServerReachable(r.ok))
+      .catch(() => setServerReachable(false));
+  }, [connected]);
 
   useEffect(() => {
     let stopped = false;
     let retry: ReturnType<typeof setTimeout>;
 
     const connect = () => {
-      const ws = new WebSocket(wsUrl());
+      const url = wsUrl();
+      const ws = new WebSocket(url);
       wsRef.current = ws;
       ws.onopen = () => {
         setConnected(true);
@@ -77,13 +95,13 @@ export function MachineProvider({ children }: { children: ReactNode }) {
       setSendError(null);
       return true;
     }
-    setSendError("Not connected to server — start npm run dev:com12");
+    setSendError("Not connected to server — run npm run dev:com12 from project root");
     return false;
   }, []);
 
   const value = useMemo(
-    () => ({ state, connected, sendError, send }),
-    [state, connected, sendError, send],
+    () => ({ state, connected, serverReachable, sendError, send }),
+    [state, connected, serverReachable, sendError, send],
   );
 
   return <MachineContext.Provider value={value}>{children}</MachineContext.Provider>;

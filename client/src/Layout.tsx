@@ -10,7 +10,7 @@ const nav = [
 ];
 
 export default function Layout() {
-  const { state, send, connected, sendError } = useMachine();
+  const { state, send, connected, serverReachable, sendError } = useMachine();
   const loc = useLocation();
 
   const ms = state?.machineStatus ?? "IDLE";
@@ -98,8 +98,14 @@ export default function Layout() {
               fontSize: 11,
             }}
           >
-            WebSocket offline — run <code>npm run dev:com12</code> (server + UI). Buttons will not
-            move the machine until connected.
+            WebSocket offline — run <code>npm run dev:com12</code> from the project root (starts both
+            server and UI). Open <strong>http://localhost:5173</strong> (not port 3847).
+            {serverReachable === true && (
+              <> Server API is up — refresh the page; WebSocket uses <code>/ws</code> via Vite.</>
+            )}
+            {serverReachable === false && (
+              <> Server API not reachable — check the terminal for errors on port 3847.</>
+            )}
           </div>
         )}
         {sendError && (

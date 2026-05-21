@@ -203,8 +203,9 @@ setInterval(() => {
   broadcast({ type: "state", payload: machine.snapshot() });
 }, 1000);
 
-server.listen(PORT, async () => {
-  console.log(`CNC server listening on http://localhost:${PORT}`);
+server.listen(PORT, "0.0.0.0", async () => {
+  console.log(`CNC server listening on http://127.0.0.1:${PORT} (WebSocket + API)`);
+  console.log(`  UI dev:  http://localhost:5173  (proxies /api and /ws → :${PORT})`);
   await initHardware();
 });
 

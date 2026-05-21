@@ -158,6 +158,33 @@ Re-flash `firmware/mcu_json_protocol/mcu_json_protocol.ino` after changes.
 
 ---
 
+## “WebSocket offline” but server shows USB linked
+
+The **MCU (USB)** and the **browser (WebSocket)** are two different links:
+
+| Link | What connects |
+|------|----------------|
+| USB | Server ↔ MCU on COM12 — `[hardware] USB linked` |
+| WebSocket | Browser ↔ Node server — UI buttons & DRO |
+
+The UI runs on **http://localhost:5173**. The server runs on **port 3847**.  
+Do **not** open `http://localhost:3847` in the browser for the UI.
+
+**Fix (built into the project):** in dev, WebSocket goes through Vite at `ws://localhost:5173/ws` (same port as the page), so Windows Firewall does not need to allow port 3847 for the browser.
+
+1. Stop everything (Ctrl+C).
+2. From project root:
+   ```bash
+   npm run dev:com12
+   ```
+3. Wait until you see **both** `server` (USB linked) and `client` (Vite ready).
+4. Open only: **http://localhost:5173**
+5. Hard refresh (Ctrl+F5). The red offline banner should disappear.
+
+If it still fails: check `http://localhost:5173/api/hardware` in the browser — should return JSON with `"hardware": true`.
+
+---
+
 ## Jog buttons do not change DRO values
 
 **Fixed in app:** jog always updates the UI immediately; MCU sync is optional.
