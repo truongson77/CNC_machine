@@ -13,7 +13,8 @@ import type { MachineState } from "./types";
 type Ctx = {
   state: MachineState | null;
   connected: boolean;
-  send: (type: string, payload?: Record<string, unknown>) => void;
+  sendError: string | null;
+  send: (type: string, payload?: Record<string, unknown>) => boolean;
 };
 
 const MachineContext = createContext<Ctx | null>(null);
@@ -21,15 +22,17 @@ const MachineContext = createContext<Ctx | null>(null);
 function wsUrl() {
   const env = import.meta.env.VITE_WS_URL as string | undefined;
   if (env) return env;
-  const { protocol, hostname } = window.location;
-  const isHttps = protocol === "https:";
-  const wsProto = isHttps ? "wss" : "ws";
-  return `${wsProto}://${hostname}:3847`;
+  const host =
+    import.meta.env.DEV && window.location.hostname === "localhost"
+      ? "127.0.0.1"
+      : window.location.hostname;
+  return `ws://${host}:3847`;
 }
 
 export function MachineProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<MachineState | null>(null);
   const [connected, setConnected] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -39,7 +42,10 @@ export function MachineProvider({ children }: { children: ReactNode }) {
     const connect = () => {
       const ws = new WebSocket(wsUrl());
       wsRef.current = ws;
-      ws.onopen = () => setConnected(true);
+      ws.onopen = () => {
+        setConnected(true);
+        setSendError(null);
+      };
       ws.onclose = () => {
         setConnected(false);
         wsRef.current = null;
@@ -68,10 +74,17 @@ export function MachineProvider({ children }: { children: ReactNode }) {
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type, payload: payload ?? {} }));
+      setSendError(null);
+      return true;
     }
+    setSendError("Not connected to server — start npm run dev:com12");
+    return false;
   }, []);
 
-  const value = useMemo(() => ({ state, connected, send }), [state, connected, send]);
+  const value = useMemo(
+    () => ({ state, connected, sendError, send }),
+    [state, connected, sendError, send],
+  );
 
   return <MachineContext.Provider value={value}>{children}</MachineContext.Provider>;
 }

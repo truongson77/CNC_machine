@@ -14,6 +14,15 @@ export type SerialBridgeEvents = {
 
 const SERIAL_DEBUG = process.env.SERIAL_DEBUG === "1" || process.env.SERIAL_DEBUG === "true";
 
+/** Windows often needs \\\\.\\COM12 for reliable access. */
+export function normalizeSerialPath(path: string): string {
+  const trimmed = path.trim();
+  if (process.platform === "win32" && /^COM\d+$/i.test(trimmed)) {
+    return `\\\\.\\${trimmed.toUpperCase()}`;
+  }
+  return trimmed;
+}
+
 export class SerialBridge extends EventEmitter<SerialBridgeEvents> {
   readonly path: string;
   private port: SerialPort | null = null;
@@ -22,14 +31,15 @@ export class SerialBridge extends EventEmitter<SerialBridgeEvents> {
 
   constructor(path: string, baudRate: number) {
     super();
-    this.path = path;
-    this.port = new SerialPort({ path, baudRate, autoOpen: false });
+    this.path = normalizeSerialPath(path);
+    this.port = new SerialPort({ path: this.path, baudRate, autoOpen: false });
     this.parser = this.port.pipe(new ReadlineParser({ delimiter: "\n" }));
     this.parser.on("data", (line: string) => {
-      if (SERIAL_DEBUG) console.log(`[serial RX] ${line.trim()}`);
-      const msg = parseMcuLine(line);
+      const trimmed = line.trim();
+      if (SERIAL_DEBUG) console.log(`[serial RX] ${trimmed}`);
+      const msg = parseMcuLine(trimmed);
       if (msg) this.emit("message", msg);
-      else this.emit("raw", line);
+      else if (trimmed) this.emit("raw", trimmed);
     });
     this.port.on("open", () => {
       this.open = true;

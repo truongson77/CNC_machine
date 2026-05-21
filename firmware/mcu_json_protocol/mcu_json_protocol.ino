@@ -130,7 +130,7 @@ bool parseGcodeMove(const char* line) {
   return true;
 }
 
-void handleCommand(JsonDocument& doc) {
+void handleCommand(StaticJsonDocument<512>& doc) {
   const char* cmd = doc["cmd"] | "";
 
   if (!cmd[0]) {

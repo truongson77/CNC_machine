@@ -173,7 +173,7 @@ export class MachineRuntime {
     spindle?: number;
     tempC?: number;
   }) {
-    if (patch.machineStatus) {
+    if (patch.machineStatus !== undefined) {
       this.state.machineStatus = patch.machineStatus;
       this.state.statusLabel =
         patch.machineStatus === "EXECUTING"
@@ -281,7 +281,40 @@ export class MachineRuntime {
 
   private tryForward(type: string, payload: Record<string, unknown>): boolean {
     if (!this.hardwareMode || !this.hardwareForward) return false;
-    return this.hardwareForward(type, payload);
+    try {
+      return this.hardwareForward(type, payload);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Hardware I/O failed";
+      this.state.systemToast = msg;
+      this.emit();
+      return false;
+    }
+  }
+
+  /** Update work position for jog (always runs — UI must not wait on MCU). */
+  private applyJogMotion(
+    axis: "X" | "Y" | "Z",
+    direction: 1 | -1,
+    rapid: boolean,
+    stepMm: number,
+  ): boolean {
+    const dist = rapid ? stepMm * 50 : stepMm;
+    const sign = direction;
+    const p = this.state.position;
+    const c: ParsedCoords = {};
+    if (axis === "X") c.x = p.x + sign * dist;
+    if (axis === "Y") c.y = p.y + sign * dist;
+    if (axis === "Z") c.z = p.z + sign * dist;
+    if (!this.softLimitCheck(c)) {
+      this.state.systemToast = "Jog blocked — soft limit";
+      return false;
+    }
+    if (c.x != null) p.x = c.x;
+    if (c.y != null) p.y = c.y;
+    if (c.z != null) p.z = c.z;
+    this.syncMachineFromWork();
+    this.updateTravelPercent();
+    return true;
   }
 
   private initialState(): MachineState {
@@ -465,24 +498,16 @@ export class MachineRuntime {
 
   jog(axis: "X" | "Y" | "Z", direction: 1 | -1, rapid: boolean, stepMm: number) {
     if (this.state.machineStatus === "ESTOP" || this.state.machineStatus === "ERROR") return;
-    if (this.tryForward("jog", { axis, direction, rapid, stepMm })) return;
-    const dist = rapid ? stepMm * 50 : stepMm;
-    const sign = direction;
-    const p = this.state.position;
-    const c: ParsedCoords = {};
-    if (axis === "X") c.x = p.x + sign * dist;
-    if (axis === "Y") c.y = p.y + sign * dist;
-    if (axis === "Z") c.z = p.z + sign * dist;
-    if (!this.softLimitCheck(c)) {
-      this.state.systemToast = "Jog blocked — soft limit";
+    if (!this.applyJogMotion(axis, direction, rapid, stepMm)) {
       this.emit();
       return;
     }
-    if (c.x != null) p.x = c.x;
-    if (c.y != null) p.y = c.y;
-    if (c.z != null) p.z = c.z;
-    this.syncMachineFromWork();
-    this.updateTravelPercent();
+    if (this.hardwareMode) {
+      const sent = this.tryForward("jog", { axis, direction, rapid, stepMm });
+      this.state.systemToast = sent
+        ? `Jog ${axis}${direction > 0 ? "+" : "−"} → MCU`
+        : `Jog ${axis} (local only — MCU not reached)`;
+    }
     this.emit();
   }
 

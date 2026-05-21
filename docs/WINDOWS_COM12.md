@@ -158,6 +158,20 @@ Re-flash `firmware/mcu_json_protocol/mcu_json_protocol.ino` after changes.
 
 ---
 
+## Jog buttons do not change DRO values
+
+**Fixed in app:** jog always updates the UI immediately; MCU sync is optional.
+
+| Check | What to do |
+|-------|------------|
+| Red **WebSocket offline** banner | Run `npm run dev:com12` from project root; open http://localhost:5173 |
+| Yellow **Not connected to server** | Server not running on port **3847** |
+| DRO stuck at 124 / never moves | Hard-refresh browser; confirm `[jog]` lines in server terminal when pressing X+ |
+| `[serial TX]` but no `[serial RX]` | Re-flash `mcu_json_protocol.ino`, baud **115200**, close Serial Monitor |
+| Values jump to 0 | MCU reports `x:0` — normal after USB connect; press X+ should show 0.01, 0.02, … |
+
+---
+
 ## Troubleshooting COM12
 
 | Symptom | What to do |

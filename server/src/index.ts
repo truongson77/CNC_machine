@@ -95,14 +95,13 @@ function handleClientMessage(
         if (!r.ok) ws.send(JSON.stringify({ type: "mdi_error", message: r.error }));
         break;
       }
-      case "jog":
-        machine.jog(
-          p.axis as "X" | "Y" | "Z",
-          (p.direction === -1 ? -1 : 1) as 1 | -1,
-          Boolean(p.rapid),
-          Number(p.stepMm) || 0.01,
-        );
+      case "jog": {
+        const axis = p.axis as "X" | "Y" | "Z";
+        const direction = (p.direction === -1 ? -1 : 1) as 1 | -1;
+        console.log(`[jog] ${axis} dir=${direction} hw=${machine.isHardwareMode()}`);
+        machine.jog(axis, direction, Boolean(p.rapid), Number(p.stepMm) || 0.01);
         break;
+      }
       case "cycle_start":
         machine.cycleStart();
         break;
@@ -175,6 +174,16 @@ app.get("/api/state", (_req, res) => {
 
 app.get("/api/ports", async (_req, res) => {
   res.json({ ports: await listSerialPorts(), hardware: machine.isHardwareMode() });
+});
+
+app.get("/api/hardware", (_req, res) => {
+  const s = machine.snapshot();
+  res.json({
+    hardware: machine.isHardwareMode(),
+    ethernet: s.diagnostics.ethernet,
+    terminalConnected: s.diagnostics.terminalConnected,
+    position: s.position,
+  });
 });
 
 app.post("/api/mdi", (req, res) => {

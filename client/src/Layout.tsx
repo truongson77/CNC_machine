@@ -10,7 +10,7 @@ const nav = [
 ];
 
 export default function Layout() {
-  const { state, send } = useMachine();
+  const { state, send, connected, sendError } = useMachine();
   const loc = useLocation();
 
   const ms = state?.machineStatus ?? "IDLE";
@@ -88,6 +88,46 @@ export default function Layout() {
       </header>
 
       <main className="main">
+        {!connected && (
+          <div
+            style={{
+              padding: "8px 12px",
+              marginBottom: 10,
+              border: "1px solid var(--red)",
+              color: "var(--red)",
+              fontSize: 11,
+            }}
+          >
+            WebSocket offline — run <code>npm run dev:com12</code> (server + UI). Buttons will not
+            move the machine until connected.
+          </div>
+        )}
+        {sendError && (
+          <div
+            style={{
+              padding: "8px 12px",
+              marginBottom: 10,
+              border: "1px solid var(--yellow)",
+              color: "var(--yellow)",
+              fontSize: 11,
+            }}
+          >
+            {sendError}
+          </div>
+        )}
+        {state?.diagnostics.ethernet?.includes("USB SERIAL") && (
+          <div
+            style={{
+              padding: "6px 12px",
+              marginBottom: 10,
+              border: "1px solid var(--cyan)",
+              color: "var(--cyan)",
+              fontSize: 11,
+            }}
+          >
+            Hardware: {state.diagnostics.ethernet}
+          </div>
+        )}
         <Outlet />
       </main>
 

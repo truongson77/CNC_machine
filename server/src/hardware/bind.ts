@@ -58,7 +58,14 @@ export function bindSerialToMachine(
         bridge.send({ cmd: "gcode", line, id });
         return true;
       }
-      bridge.send(cmd);
+      try {
+        bridge.send(cmd);
+      } catch (err) {
+        machine.setSystemToast(
+          `Serial send failed: ${err instanceof Error ? err.message : "error"}`,
+        );
+        return false;
+      }
       if (type === "estop") machine.applyHardwareEstop();
       if (type === "reset") machine.applyHardwareReset();
       return true;
@@ -134,15 +141,27 @@ function ingestMcu(machine: MachineRuntime, msg: McuInbound, protocol: HardwareP
     machine.setSystemToast(msg.msg);
     return;
   }
-  if (msg.evt === "status" || msg.evt === "jog_done") {
-    const m = msg as McuInbound & { x?: number; y?: number; z?: number; machine?: string };
+  if (msg.evt === "jog_done") {
+    const m = msg as { x?: number; y?: number; z?: number };
+    machine.applyHardwareTelemetry({ x: m.x, y: m.y, z: m.z });
+    return;
+  }
+  if (msg.evt === "status") {
+    const m = msg as McuInbound & {
+      x?: number;
+      y?: number;
+      z?: number;
+      machine?: string;
+      spindle?: number;
+      tempC?: number;
+    };
     machine.applyHardwareTelemetry({
       machineStatus: mapMachineStatus(m.machine),
       x: m.x,
       y: m.y,
       z: m.z,
-      spindle: (m as { spindle?: number }).spindle,
-      tempC: (m as { tempC?: number }).tempC,
+      spindle: m.spindle,
+      tempC: m.tempC,
     });
     return;
   }
